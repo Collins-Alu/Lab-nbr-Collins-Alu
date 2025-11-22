@@ -14,14 +14,14 @@ def input_nonempty(prompt: str) -> str:
         v =  input(prompt) .strip()
         if v:
             return v
-        print("Can't be blank. Try again.")
+        print("Cannot be blank. Try again.")
 
 def input_category(prompt: str) -> str:
     while True:
         v = input(prompt) .strip() .upper()
         if v in ("FA", "SA"):
             return v
-        print ("Category must be 'FA' or 'SA'.")
+        print ("Category must be 'FA' or 'SA'(case-senstive).")
 
 def input_float_in_range(prompt: str, min_val: float = None, max_val: float = None) -> float:
     while True:
@@ -66,9 +66,10 @@ def calculate(assignments: List[Assignment]):
 
     gpa = (t_grade / 100.0) * 5.0
 
-    pass_fa = ( t_FA >= 0.5 * sum_fa_weights) if sum_fa_weights == 0 else True
-    pass_sa = ( t_SA >= 0.5 * sum_sa_weights) if sum_sa_weights == 0 else True
-    passed = pass_fa + pass_sa 
+    pass_fa = True if sum_fa_weights == 0 else (t_FA >= 0.5 * sum_fa_weights)
+    pass_sa = True if sum_sa_weights == 0 else (t_SA >= 0.5 * sum_sa_weights)
+    passed = pass_fa + pass_sa
+     
     return {
     't_FA': t_FA,
     't_SA': t_SA,
@@ -80,27 +81,28 @@ def calculate(assignments: List[Assignment]):
     }
 
 
-def save_csv(assignments, filename='grades_csv'):
+def save_csv(assignments: List[Assignment], filename: str ='grades_csv'):
     with open(filename, 'w', newline='') as f:
         writer = csv.writer (f)
         writer.writerow(['Assignment', 'Category', 'Grade', 'Weight'])
         for a in assignments:
-            writer.writerow([a.name, a.category, a.grade, a.weight])
+            writer.writerow([a.name, a.category,f"{a.grade:.2f}", f"{a.weight:.2f}"])
 
 
 def print_summary(results):
-    print(f"Formative points: {results['FA']: .2f} {results['sum_fa_weights']: .2f} ")
-    print(f"Summative points: {results['SA']: .2f} {results['sum_sa_weights']: .2f} ")
-    print(f"Final Total: {results['total_grade']:.2f} / {(results['sum_fa_weights']+results['sum_sa_weights']):.2f}")
+    print(f"Formative points: {results['t_FA']: .2f} {results['sum_fa_weights']: .2f} ")
+    print(f"Summative points: {results['t_SA']: .2f} {results['sum_sa_weights']: .2f} ")
+    total_possible = results['sum_fa_weights'] +results['sum_sa_weights']
+    print(f"Final Total: {results['t_grade']:.2f} / {total_possible:.2f}")
     print(f"GPA (scale 5): {results['gpa']:.2f}")
-    status = "PASSED" if results['passed'] else" FAILED"
+    status = "PASSED" if results['passed'] else "FAILED"
     print(f"Status: {status}")
 
 def main():
-    print("Grade Generator - enter assignments.")
+    print("Grade Generator - enter assignments. Type 'n' when asked to stop.")
     assignments: list[Assignment] = []
     while True:
-        assignments.append (input_assignment)
+        assignments.append(input_assignment())
         cont = input ("Add assignment? (y/n): "). strip(). lower() 
         if cont == 'n':
             break
@@ -109,13 +111,13 @@ def main():
         print("No assignments entered. Exiting.")
         return
     
-    results = calculate(Assignment)
+    results = calculate(assignments)
     print_summary(results)
     save_csv(assignments)
     print ("Saved assignments to grades.csv")
 
 if __name__ == '__main__':
-    main()
+    main(),
 
         
 
